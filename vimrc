@@ -1,212 +1,131 @@
-" Peter Moran .vimrc
-" ==================
-"
-" Sources
-" -------
-" https://github.com/mbrochh/vim-as-a-python-ide
+" need to enable ALE completion before plugin loads
+let g:ale_completion_enabled = 1
+let g:ale_fix_on_save = 1
+" set omnifunc=ale#completion#OmniFunc
+set completeopt+=noinsert
 
+" add fzf path
+set rtp+=~/usr/src/fzf
+set rtp+=~/usr/src/fzf.vim
 
-" Pathogen for plugin management.
-" >>> mkdir -p ~/.vim/autoload ~/.vim/bundle
-" >>> curl -so ~/.vim/autoload/pathogen.vim https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim
+" pathogen load
+filetype off
 execute pathogen#infect()
+syntax on
+filetype plugin indent on
 
-
-" Automatic reloading of .vimrc
+" auto reload vimrc after saving
 autocmd! bufwritepost .vimrc source %
 
+" better copy/paste with F10 toggle
+" set pastetoggle=<F10>
+" set clipboard=unnamed
 
-" Better copy & paste
-" When you want to paste large blocks of code into vim, press F2 before you
-" paste. At the bottom you should see ``-- INSERT (paste) --``.
-set pastetoggle=<F2>
-set clipboard=unnamed
-
-
-" Mouse and backspace
-set mouse=r " on OSX press ALT and click
-set bs=2 " make backspace behave like normal again
-
-
-" Quicksave command to Ctrl-Z
-noremap <C-Z> :update<CR>
-vnoremap <C-Z> <C-C>:update<CR>
-inoremap <C-Z> <C-O>:update<CR>
-
+set nocompatible    " disable vi compatibility (emulation of old bugs)
+set autoindent      " use indentation of previous line
+set nosmartindent   " use intelligent indentation for C
+set tabstop=4       " tab width is 4 spaces
+set shiftwidth=4    " indent also with 4 spaces
+set expandtab       " expand tabs to spaces
+set softtabstop=4   " makes bksp remove 4 spaces
 
 " easier moving of code blocks
-" Try to go into visual mode (v), thenselect several lines of code here and
-" then press ``>`` several times.
 vnoremap < <gv " better indentation
 vnoremap > >gv " better indentation
 
+" use :e %%/ to edit a file in the same path as current buffer
+cabbr <expr> %% expand('%:p:h')
+cabbr <expr> % expand('%:h')
 
-" Show whitespace
-" MUST be inserted BEFORE the colorscheme command
-autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
-au InsertLeave * match ExtraWhitespace /\s\+$/
+" bash-like file completion
+set wildmode=longest,list,full
+set wildmenu
 
-
-" Enable syntax highlighting
-" You need to reload this file for the change to apply
-filetype off
-filetype plugin indent on
-syntax on
-
-
-" Color scheme
-" mkdir -p ~/.vim/colors; wget https://raw.githubusercontent.com/jnurmine/Zenburn/master/colors/zenburn.vim -O ~/.vim/colors/zenburn.vim
-" https://github.com/jnurmine/Zenburn
-" Download colors/zenburn.vim to ~/.vim/colors
+" appearance customisation
 set t_Co=256
-
-let g:zenburn_high_Contrast=0
-color zenburn
-
+set background=dark
+let g:gruvbox_contrast_dark="soft"
+" let g:gruvbox_contrast_light="medium"
 " set background=light
-" let g:solarized_termcolors=256
-" colorscheme solarized
+colorscheme gruvbox
 
-" let g:pencil_higher_contrast_ui=1
-" color pencil
-
+set number     " turn line numbers on
+set showmatch  " highlight matching braces
 set cursorline
 
+" rainbow parentheses improved
+let g:rainbow_active = 1
+let g:rainbow_conf = {'separately': {'cmake': 0}}
 
-" Parentheses highlighting
-" hi MatchParen cterm=bold ctermbg=none ctermfg=cyan
-hi MatchParen cterm=bold ctermbg=none ctermfg=yellow
+" disable backup files
+set nobackup
+set nowritebackup
+set noswapfile
 
-
-" Showing line numbers and length
-set number  " show line numbers
-set tw=79   " width of document (used by gd)
-set nowrap  " don't automatically wrap on load
-set fo-=t   " don't automatically wrap text when typing
-
-if exists('+colorcolumn')
-    set colorcolumn=80
-    " highlight ColorColumn ctermbg=238
-    " highlight ColorColumn ctermbg=s:base03
-endif
-
-
-" easier formatting of paragraphs
-vmap Q gq
-nmap Q gqap
-
-
-" Useful settings
-set history=700
-set undolevels=700
-
-
-" Real programmers don't use TABs but spaces
-set tabstop=4
-set softtabstop=4
-set shiftwidth=4
-set shiftround
-set expandtab
-set nosmartindent
-set noautoindent
-
-
-" Bash like tab-completion when opening files
-set wildmode=longest:list
-" set wildmode=longest:full,full
-
-
-" Make search case insensitive
+" searching
 set hlsearch
 set incsearch
 set ignorecase
 set smartcase
 
+" use custom automake script for make
+set makeprg=automake
 
-" Disable stupid backup and swap files - they trigger too many events
-" for file system watchers
-set nobackup
-set nowritebackup
-set noswapfile
+" disable 'recording' command
+nnoremap q <Nop>
 
+" Triger `autoread` when files changes on disk
+" https://unix.stackexchange.com/questions/149209/refresh-changed-content-of-file-opened-in-vim/383044#383044
+" https://vi.stackexchange.com/questions/13692/prevent-focusgained-autocmd-running-in-command-line-editing-mode
+autocmd FocusGained,BufEnter,CursorHold,CursorHoldI * if mode() != 'c' | checktime | endif
+" Notification after file change
+" https://vi.stackexchange.com/questions/13091/autocmd-event-for-autoread
+autocmd FileChangedShellPost *
+  \ echohl WarningMsg | echo "File changed on disk. Buffer reloaded." | echohl None
 
-" c-indentation.
-" http://vimdoc.sourceforge.net/htmldoc/indent.html#C-indenting
-"
-" (0,W4 -- better indentation for function args
-" N-s   -- namespace no indentation
-" g0    -- public/private flat indentation
-" :0    -- flat switch case indentation
-" is    -- indent initializer list by one
-set cindent
-set cino=N-s,g0,:0,(0,W4,is,+s
-
-" Recognise .tpp files as c++
+" recognise .tpp files as c++
 autocmd BufNewFile,BufReadPost *.tpp set filetype=cpp
 
-" Source/header file switching with F4
-" $ mkdir -p ~/.vim/plugin
-" $ cd ~/.vim/plugin && wget https://raw.githubusercontent.com/derekwyatt/vim-fswitch/master/plugin/fswitch.vim
-map <F4> :FSHere<CR>
+set autowrite
+autocmd QuickFixCmdPost [^l]* nested cwindow
+autocmd QuickFixCmdPost    l* nested lwindow
 
-" Install plugins:
-" >>> cd ~/.vim/bundle
-" >>> git clone git://github.com/tpope/vim-sensible.git
-" >>> git clone git://github.com/klen/python-mode.git
-" >>> git clone --recursive https://github.com/davidhalter/jedi-vim.git
-" xxx >>> git clone https://github.com/hynek/vim-python-pep8-indent.git
+" Delete buffer without closing window
+:command! BufferDelete :bn|:bd#
 
-let g:pymode_indent = 1
-let g:pymode_folding = 1
-let g:pymode_motion = 1
-let g:pymode_doc = 0
-let g:pymode_virtualenv = 0
-let g:pymode_run = 0
-let g:pymode_breakpoint = 0
-let g:pymode_syntax = 1
+" leader (\ key) bindings
+" space : disable search highlighting
+nnoremap <leader><space> :nohlsearch<esc>
+" n, p : next, previous quickfix error
+nnoremap <leader>n :cn<esc>
+nnoremap <leader>p :cN<esc>
+" r : search replace word under cursor
+nnoremap <Leader>r :%s/\<<C-r><C-w>\>/
+" common commands
+nnoremap <leader>w :w<esc>
+nnoremap <leader>x :BufferDelete<esc>
+nnoremap <leader>q :qa<esc>
+nnoremap <leader>o :only<esc>
+nnoremap <leader>c :make<esc>
+" fzf commands
+nnoremap <leader>b :Buffers<esc>
+nnoremap <leader>f :Files<esc>
+nnoremap <leader>g :Rg<esc>
+" ale commands
+nnoremap <leader>a :ALENextWrap<CR>
+nnoremap <leader>s :ALEPreviousWrap<CR>
+nnoremap <leader>d :ALEGoToDefinition<CR>
+nnoremap <leader>v :ALEHover<CR>
+" nerdtree commands
+nnoremap <leader>t :NERDTreeFocus<CR>
 
-let g:pymode_trim_whitespaces = 1
+" ctrl h/l to shift tabs
+nnoremap <C-h> :bprev<CR>
+nnoremap <C-l> :bnext<CR>
 
-let g:pymode_lint = 1
-let g:pymode_lint_on_write = 1
-let g:pymode_lint_unmodified = 1
-let g:pymode_lint_on_fly = 0
-let g:pymode_lint_message = 1
-let g:pymode_lint_checkers = ['pyflakes', 'pep8']  " , 'mccabe']
-" let g:pymode_lint_checkers = ['pep8']
-
-let g:pymode_rope = 0
-let g:pymode_rope_completion = 0
-" let g:pymode_rope_complete_on_dot = 1
-" let g:pymode_rope_completion_bind = '<C-Space>'
-" let g:pymode_rope_autoimport = 0
-" let g:pymode_rope_autoimport_modules = ['os', 'shutil', 'datetime']
-" let g:pymode_rope_autoimport_import_after_complete = 0
-
-
-" Ignore some annoying pep messages.
-" let g:pymode_lint_ignore = "E501,W0401,C901,E731"
-let g:pymode_lint_ignore = "E501,W0401,C901,E731"
-
-" let g:NERDSpaceDelims = 1
-
-let g:jedi#show_call_signatures = 0
-let g:jedi#popup_on_dot = 0
-autocmd FileType python setlocal completeopt-=preview
-
-" autopep8 (requires pip install autopep8)
-let g:autopep8_select = "E126,E127,E128,E131,E202,E203,E225,E231,E262,E265,E266,E301,E302,E303,E231,E251,E265"
-let g:autopep8_disable_show_diff = 1
-
-" >>> git clone https://github.com/scrooloose/syntastic.git
-" >>> conda install pylint
-" set statusline+=%#warningmsg#
-" set statusline+=%{SyntasticStatuslineFlag()}
-" set statusline+=%*
-
-" let g:syntastic_always_populate_loc_list = 1
-" let g:syntastic_auto_loc_list = 1
-" let g:syntastic_check_on_open = 1
-" let g:syntastic_check_on_wq = 0
-" 
-" let g:syntastic_python_checkers = ['flake8']
+" Function to make ALE completion and Supertab completion play nice
+" by first trying ALE and then falling back to default vim.
+autocmd FileType *
+  \ if &omnifunc != '' |
+  \   call SuperTabChain(&omnifunc, "<c-p>") |
+  \ endif
